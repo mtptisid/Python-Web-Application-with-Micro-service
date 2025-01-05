@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from flask import Flask, jsonify, abort
 from flask_cors import CORS
+from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import UniqueConstraint
 import requests
@@ -8,11 +9,13 @@ import requests
 from producer import publish
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = 'mysql://root:root@db/main'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://appuser:appuserpassword@db/maindb'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 CORS(app)
 
 db = SQLAlchemy(app)
 
+migrate = Migrate(app, db)
 
 @dataclass
 class Product(db.Model):
@@ -33,6 +36,9 @@ class ProductUser(db.Model):
 
     UniqueConstraint('user_id', 'product_id', name='user_product_unique')
 
+@app.route('/hello')
+def hello():
+    return "Hello, Flask!"
 
 @app.route('/api/products')
 def index():
@@ -41,7 +47,7 @@ def index():
 
 @app.route('/api/products/<int:id>/like', methods=['POST'])
 def like(id):
-    req = requests.get('http://docker.for.mac.localhost:8000/api/user')
+    req = requests.get('http://localhost:8000/api/user')
     json = req.json()
 
     try:

@@ -1,0 +1,43 @@
+version: '3'
+services:
+  backend:
+    depends_on:
+      - db
+    entrypoint: ["sh", "-c", "sleep 20 && python manage.py runserver 0.0.0.0:8000"]
+    environment:
+      - DATABASE_HOST=db
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: 'python manage.py runserver 0.0.0.0:8000'
+    ports:
+      - 8000:8000
+    volumes:
+      - .:/app
+  queue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: 'python -u consumer.py'
+    depends_on:
+      - db
+  db:
+    image: mysql:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: myadmindb
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: appuserpassword
+    volumes:
+      - .dbdata:/var/lib/mysql
+    ports:
+      - 33066:3306
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "--host=localhost"]
+      interval: 30s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
+

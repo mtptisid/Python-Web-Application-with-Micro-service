@@ -3,15 +3,20 @@ services:
   backend:
     depends_on:
       - db
-    entrypoint: ["sh", "-c", "sleep 20 && python main.py"]
+    entrypoint: ["sh", "-c", "sleep 20 && python main.py"]  # Wait for DB to be ready
     environment:
-      - DATABASE_HOST=db
+      - DATABASE_HOST=db  # This matches the service name "db"
+      - DATABASE_PORT=3306  # Explicitly specify port for connection
+      - DATABASE_USER=appuser
+      - DATABASE_PASSWORD=appuserpassword
+      - FLASK_APP=manager.py
+      - FLASK_ENV=development
     build:
       context: .
       dockerfile: Dockerfile
     command: 'python main.py'
     ports:
-      - 8001:5000
+      - "8001:5000"
     volumes:
       - .:/app
 
@@ -34,10 +39,12 @@ services:
     volumes:
       - .dbdata:/var/lib/mysql
     ports:
-      - 33067:3306
+      - "33067:3306"  # Ensure the host-port mapping is correct
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "--host=localhost"]
       interval: 30s
       retries: 5
       start_period: 30s
       timeout: 10s
+
+
